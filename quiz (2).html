@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web基礎クイズ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --border:    #2a2e3f;
+      --accent:    #5b6ef5;
+      --accent2:   #a78bfa;
+      --correct:   #34d399;
+      --wrong:     #f87171;
+      --text:      #e8eaf0;
+      --muted:     #7b82a0;
+      --tag-bg:    #1e2235;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 80px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 900;
+      line-height: 1.1;
+      background: linear-gradient(135deg, var(--text) 40%, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      width: 100%;
+      max-width: 640px;
+      margin-bottom: 32px;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 640px;
+      position: relative;
+    }
+    .topic-tag {
+      display: inline-block;
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      color: var(--accent2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .question-text {
+      font-size: clamp(16px, 2.5vw, 20px);
+      font-weight: 700;
+      line-height: 1.55;
+      margin-bottom: 28px;
+    }
+
+    /* Choices */
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .choice-btn {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      text-align: left;
+      padding: 14px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      line-height: 1.5;
+    }
+    .choice-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: #151828;
+      transform: translateX(2px);
+    }
+    .choice-btn .idx {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 20px;
+      padding-top: 2px;
+    }
+    .choice-btn.correct {
+      border-color: var(--correct);
+      background: rgba(52, 211, 153, 0.07);
+    }
+    .choice-btn.correct .idx { color: var(--correct); }
+    .choice-btn.wrong {
+      border-color: var(--wrong);
+      background: rgba(248, 113, 113, 0.07);
+    }
+    .choice-btn.wrong .idx { color: var(--wrong); }
+    .choice-btn:disabled { cursor: default; transform: none; }
+
+    /* Explanation */
+    .explanation {
+      display: none;
+      margin-top: 24px;
+      padding: 18px 20px;
+      background: var(--tag-bg);
+      border-left: 3px solid var(--accent2);
+      border-radius: 0 8px 8px 0;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #c5c8db;
+    }
+    .explanation.show { display: block; }
+    .explanation strong { color: var(--accent2); }
+
+    /* Result badge */
+    .result-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .result-badge.show { display: flex; }
+    .result-badge.correct-badge { color: var(--correct); }
+    .result-badge.wrong-badge   { color: var(--wrong); }
+
+    /* Next button */
+    .next-btn {
+      display: none;
+      margin-top: 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px 28px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      width: 100%;
+    }
+    .next-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .next-btn.show { display: block; }
+
+    /* Final screen */
+    #final {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    #final.show { display: flex; }
+    .score-ring {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent2) calc(var(--pct) * 1%), var(--border) 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      position: relative;
+    }
+    .score-ring::after {
+      content: '';
+      width: 88px;
+      height: 88px;
+      background: var(--surface);
+      border-radius: 50%;
+      position: absolute;
+    }
+    .score-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+      position: relative;
+      z-index: 1;
+    }
+    #final h2 {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+    #final p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+    .retry-btn {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px 32px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .retry-btn:hover { border-color: var(--accent); }
+
+    @media (max-width: 500px) {
+      .card { padding: 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">// Web Design Quiz</p>
+  <h1>Web基礎クイズ</h1>
+  <p class="subtitle">全20問 · HTML / CSS</p>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span id="progress-text">問題 1 / 5</span>
+    <span id="score-text">正解 0</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+</div>
+
+<div class="card" id="quiz-card">
+  <span class="topic-tag" id="topic-tag"></span>
+  <p class="question-text" id="question-text"></p>
+  <div class="choices" id="choices"></div>
+  <div class="result-badge" id="result-badge"></div>
+  <div class="explanation" id="explanation"></div>
+  <button class="next-btn" id="next-btn"></button>
+</div>
+
+<div id="final">
+  <div class="score-ring" id="score-ring">
+    <span class="score-num" id="final-score"></span>
+  </div>
+  <h2 id="final-title"></h2>
+  <p id="final-msg"></p>
+  <button class="retry-btn" onclick="startQuiz()">もう一度挑戦する</button>
+</div>
+
+<script>
+const questions = [
+  {
+    id: 1,
+    topic: "見出しタグ",
+    question: "HTMLの見出しタグで、一番大きい（重要度が高い）見出しはどれ？",
+    choices: [
+      "h6",
+      "h3",
+      "h1",
+      "h0"
+    ],
+    answer: 2,
+    explanation: "h1 が一番大きな見出しで、h6 が一番小さい見出しです。h1 はページに1つだけ使うのが基本で、SEO（検索エンジン最適化）にも影響します。h2・h3 と順番に使っていくのがマナーですよ！"
+  },
+  {
+    id: 2,
+    topic: "p タグ",
+    question: "p タグは何のためのタグ？",
+    choices: [
+      "画像を表示するタグ",
+      "リンクを作るタグ",
+      "段落（文章のまとまり）を作るタグ",
+      "箇条書きリストを作るタグ"
+    ],
+    answer: 2,
+    explanation: "p は paragraph（段落）の略です。文章のひとかたまりを p タグで囲むと、前後に自動で余白がついて読みやすくなります。文章を書くときの基本タグですよ！"
+  },
+  {
+    id: 3,
+    topic: "a タグ・href属性",
+    question: "リンクを作るとき、飛び先のURLを指定する属性はどれ？",
+    choices: [
+      "src属性",
+      "href属性",
+      "link属性",
+      "url属性"
+    ],
+    answer: 1,
+    explanation: "a タグの href 属性にURLを書くとリンクになります。例：<a href=\"https://example.com\">こちら</a> のように書きます。href は「Hypertext REFerence」の略ですよ！"
+  },
+  {
+    id: 4,
+    topic: "a タグ・href属性",
+    question: "リンクを別タブで開くには、a タグにどんな属性を追加する？",
+    choices: [
+      'rel="noopener"',
+      'type="tab"',
+      'target="_blank"',
+      'open="new"'
+    ],
+    answer: 2,
+    explanation: 'target="_blank" を追加すると、リンクが新しいタブで開きます！セキュリティのため、セットで rel="noopener noreferrer" も書くのがおすすめです。'
+  },
+  {
+    id: 5,
+    topic: "img タグ・src・alt属性",
+    question: "画像を表示する img タグで必ず書くべき属性の組み合わせはどれ？",
+    choices: [
+      "href属性とtitle属性",
+      "src属性とalt属性",
+      "link属性とname属性",
+      "url属性とtext属性"
+    ],
+    answer: 1,
+    explanation: "src に画像のパスを、alt に画像の説明テキストを書きます。alt はアクセシビリティ（視覚障害のある方向けのスクリーンリーダー）にも使われる大切な属性です！"
+  },
+  {
+    id: 6,
+    topic: "img タグ・src・alt属性",
+    question: "画像が表示されないとき、代わりに文字を表示してくれる属性はどれ？",
+    choices: [
+      "src属性",
+      "title属性",
+      "alt属性",
+      "text属性"
+    ],
+    answer: 2,
+    explanation: "alt（オルト）属性に書いたテキストは、画像が読み込めないときに代わりに表示されます。また、スクリーンリーダーがこの文字を読み上げるので、内容をちゃんと書いておくのが大切です！"
+  },
+  {
+    id: 7,
+    topic: "ul / ol / li",
+    question: "番号なしの箇条書きリストを作るタグはどれ？",
+    choices: [
+      "ol タグ",
+      "li タグ",
+      "ul タグ",
+      "list タグ"
+    ],
+    answer: 2,
+    explanation: "ul は Unordered List（順序なしリスト）の略で、●などの記号がつく箇条書きになります。ol は Ordered List（順序ありリスト）で、1・2・3…と番号がつきます。各項目は li タグで囲みますよ！"
+  },
+  {
+    id: 8,
+    topic: "div と span",
+    question: "div と span の違いとして正しいのはどれ？",
+    choices: [
+      "div もspan もまったく同じ使い方をする",
+      "div はブロック要素（縦に積まれる）/ span はインライン要素（文中に使う）",
+      "div は文字専用 / span は画像専用のタグ",
+      "div はCSS用 / span はJavaScript用のタグ"
+    ],
+    answer: 1,
+    explanation: "div はブロック要素で、前後に改行が入って縦に積み重なります。span はインライン要素で、文章の一部だけをくくるときに使います。例えば文字の一部だけ色を変えたいときに span を使いますよ！"
+  },
+  {
+    id: 9,
+    topic: "HTMLコメントアウト",
+    question: "HTMLでコメントアウトの書き方として正しいのはどれ？",
+    choices: [
+      "// これはコメントです",
+      "/* これはコメントです */",
+      "<!-- これはコメントです -->",
+      "## これはコメントです"
+    ],
+    answer: 2,
+    explanation: "HTMLのコメントは <!-- と --> で囲みます。コメントはブラウザに表示されない非表示のメモです。CSSのコメントは /* */ 、JavaScriptのコメントは // や /* */ と書き方が違うので注意！"
+  },
+  {
+    id: 10,
+    topic: "キャメルケース",
+    question: "「キャメルケース（camelCase）」の書き方として正しいのはどれ？",
+    choices: [
+      "my-background-color",
+      "my_background_color",
+      "MyBackgroundColor",
+      "myBackgroundColor"
+    ],
+    answer: 3,
+    explanation: "キャメルケースは、最初の単語は小文字・2つ目以降の単語の頭文字を大文字にする書き方です。ラクダ（camel）のコブみたいに見えることから名前がついています🐪 JavaScriptの変数名でよく使われます！"
+  },
+  {
+    id: 11,
+    topic: "CSSセレクタ",
+    question: "CSSで class=\"title\" の要素にスタイルを当てるセレクタはどれ？",
+    choices: [
+      "#title { }",
+      ".title { }",
+      "title { }",
+      "@title { }"
+    ],
+    answer: 1,
+    explanation: "クラス名には「.（ドット）」をつけてセレクタを書きます。「#」はID用、タグ名だけ書くとそのHTMLタグ全体に適用されます。クラスセレクタが一番よく使われますよ！"
+  },
+  {
+    id: 12,
+    topic: "color / background-color",
+    question: "CSSで文字の色を赤にするプロパティはどれ？",
+    choices: [
+      "background-color: red;",
+      "text-color: red;",
+      "font-color: red;",
+      "color: red;"
+    ],
+    answer: 3,
+    explanation: "文字色は color プロパティです！background-color は背景色を変えるプロパティです。color: red; や color: #ff0000; のように書きます。text-color や font-color という名前のプロパティは存在しないので要注意！"
+  },
+  {
+    id: 13,
+    topic: "font-size",
+    question: "CSSで文字の大きさを16ピクセルにするには？",
+    choices: [
+      "text-size: 16px;",
+      "font-size: 16px;",
+      "font: 16px;",
+      "size: 16px;"
+    ],
+    answer: 1,
+    explanation: "文字サイズは font-size プロパティで指定します。単位は px（ピクセル）のほか、em・rem・%なども使います。ブラウザのデフォルトは大体 16px ですよ！"
+  },
+  {
+    id: 14,
+    topic: "text-align",
+    question: "CSSで文字を中央揃えにするプロパティの書き方はどれ？",
+    choices: [
+      "text-align: middle;",
+      "align: center;",
+      "text-align: center;",
+      "font-align: center;"
+    ],
+    answer: 2,
+    explanation: "text-align: center; で文字が中央に揃います！right で右寄せ、left で左寄せ、justify で両端揃えになります。見出しを中央に配置したいときによく使いますよ！"
+  },
+  {
+    id: 15,
+    topic: "margin / padding",
+    question: "margin と padding の違いとして正しいのはどれ？",
+    choices: [
+      "margin＝要素の内側の余白 / padding＝要素の外側の余白",
+      "margin＝要素の外側の余白 / padding＝要素の内側の余白",
+      "margin もpadding も同じ意味で使える",
+      "margin＝縦の余白 / padding＝横の余白"
+    ],
+    answer: 1,
+    explanation: "margin は要素の外側の余白（他の要素との距離）、padding は要素の内側の余白（枠線とコンテンツの距離）です。ボックスモデルの基本なので必ず覚えましょう！"
+  },
+  {
+    id: 16,
+    topic: "border",
+    question: "CSSで「1pxの黒い実線の枠線」を引くには？",
+    choices: [
+      "border: black 1px;",
+      "border: 1px solid black;",
+      "outline: 1px black solid;",
+      "frame: 1px solid black;"
+    ],
+    answer: 1,
+    explanation: "border プロパティは「太さ・線の種類・色」の順に書きます。solid は実線、dashed は破線、dotted は点線です。border: 2px dashed red; のように組み合わせられますよ！"
+  },
+  {
+    id: 17,
+    topic: "display: flex",
+    question: "display: flex; を親要素に指定したとき、子要素はどう並ぶ？",
+    choices: [
+      "子要素が縦に並ぶ",
+      "子要素が非表示になる",
+      "子要素が横に並ぶ",
+      "子要素の順番がランダムになる"
+    ],
+    answer: 2,
+    explanation: "display: flex; を指定すると、子要素がデフォルトで横（左から右）に並びます！縦に並べたいときは flex-direction: column; を追加します。ナビゲーションバーや画像の横並びによく使われますよ！"
+  },
+  {
+    id: 18,
+    topic: "画像の横並び",
+    question: "3枚の画像を横並びにするCSSとして正しいのはどれ？",
+    choices: [
+      "親要素に display: block; を指定する",
+      "img タグに float: none; を指定する",
+      "親要素に display: flex; を指定する",
+      "img タグに display: vertical; を指定する"
+    ],
+    answer: 2,
+    explanation: "親要素（imgを囲むdivなど）に display: flex; を指定するのが一番スマートです！子要素の img が自動で横並びになります。gap プロパティで画像間の隙間も簡単に調整できますよ。"
+  },
+  {
+    id: 19,
+    topic: "width と height",
+    question: "CSSで要素の横幅を指定するプロパティはどれ？",
+    choices: [
+      "horizontal",
+      "size",
+      "width",
+      "length"
+    ],
+    answer: 2,
+    explanation: "横幅は width（ウィドゥス）、縦の高さは height（ハイト）で指定します。width: 300px; や width: 100%; のように使います。% を使うと親要素に対する割合で指定できてレスポンシブに役立ちますよ！"
+  },
+  {
+    id: 20,
+    topic: "px（ピクセル）",
+    question: "CSSで使う「px（ピクセル）」とはどんな単位？",
+    choices: [
+      "画面の横幅に対するパーセントの単位",
+      "親要素のフォントサイズを基準にした相対的な単位",
+      "画面を構成する点（ドット）を基準にした固定の単位",
+      "印刷用の長さの単位（センチメートル）"
+    ],
+    answer: 2,
+    explanation: "px は pixel（ピクセル）の略で、画面を構成する小さな点の数を表す固定単位です。どの画面でも同じサイズで表示されるのが特徴。一方、em・rem・% は相対的な単位で、画面サイズに応じて変わります！"
+  }
+];
+
+const ALPHA = ['A', 'B', 'C', 'D'];
+
+let current = 0;
+let score = 0;
+
+function startQuiz() {
+  current = 0;
+  score = 0;
+  document.getElementById('final').classList.remove('show');
+  document.getElementById('quiz-card').style.display = 'block';
+  document.querySelector('.progress-wrap').style.display = 'block';
+  updateScore();
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+
+  // Progress
+  document.getElementById('progress-text').textContent = `問題 ${current + 1} / ${total}`;
+  document.getElementById('progress-fill').style.width = `${(current / total) * 100}%`;
+
+  document.getElementById('topic-tag').textContent = q.topic;
+  document.getElementById('question-text').textContent = q.question;
+
+  // Choices
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  q.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    const idxSpan = document.createElement('span');
+    idxSpan.className = 'idx';
+    idxSpan.textContent = ALPHA[i];
+    const textSpan = document.createElement('span');
+    textSpan.textContent = c;
+    btn.appendChild(idxSpan);
+    btn.appendChild(textSpan);
+    btn.onclick = () => selectAnswer(i);
+    choicesEl.appendChild(btn);
+  });
+
+  // Reset result & explanation
+  const badge = document.getElementById('result-badge');
+  badge.className = 'result-badge';
+  badge.textContent = '';
+
+  document.getElementById('explanation').className = 'explanation';
+  document.getElementById('explanation').innerHTML = '';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.className = 'next-btn';
+  nextBtn.textContent = current < total - 1 ? '次の問題へ →' : '結果を見る';
+}
+
+function selectAnswer(idx) {
+  const q = questions[current];
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const isCorrect = idx === q.answer;
+  if (isCorrect) score++;
+
+  // Highlight
+  btns[q.answer].classList.add('correct');
+  if (!isCorrect) btns[idx].classList.add('wrong');
+
+  // Badge
+  const badge = document.getElementById('result-badge');
+  if (isCorrect) {
+    badge.className = 'result-badge correct-badge show';
+    badge.innerHTML = '✓ 正解！';
+  } else {
+    badge.className = 'result-badge wrong-badge show';
+    badge.innerHTML = '✗ 不正解…';
+  }
+
+  // Explanation
+  const expEl = document.getElementById('explanation');
+  expEl.innerHTML = `<strong>解説：</strong>${q.explanation}`;
+  expEl.classList.add('show');
+
+  // Next button
+  document.getElementById('next-btn').classList.add('show');
+
+  updateScore();
+}
+
+function updateScore() {
+  document.getElementById('score-text').textContent = `正解 ${score}`;
+}
+
+document.getElementById('next-btn').onclick = () => {
+  current++;
+  if (current < questions.length) {
+    showQuestion();
+  } else {
+    showFinal();
+  }
+};
+
+function showFinal() {
+  document.getElementById('quiz-card').style.display = 'none';
+  document.querySelector('.progress-wrap').style.display = 'none';
+
+  const pct = Math.round((score / questions.length) * 100);
+  const ring = document.getElementById('score-ring');
+  ring.style.setProperty('--pct', pct);
+  document.getElementById('final-score').textContent = `${score}/${questions.length}`;
+
+  let title, msg;
+  if (score === questions.length) {
+    title = '🎉 パーフェクト！';
+    msg = '全問正解です！HTML・CSSの基礎はバッチリですね。この調子でどんどん学んでいきましょう！';
+  } else if (score >= 16) {
+    title = '👏 すごい！';
+    msg = `${score}問正解です。あと少しで満点！解説を読み返して、ニガテな部分を確認してみましょう。`;
+  } else if (score >= 10) {
+    title = '😊 よくできました！';
+    msg = `${score}問正解です。半分以上クリア！もう一度チャレンジして満点を目指しましょう💪`;
+  } else {
+    title = '💪 もう一度チャレンジ！';
+    msg = `${score}問正解です。解説をじっくり読んで、復習してからもう一度挑戦してみましょう！`;
+  }
+
+  document.getElementById('final-title').textContent = title;
+  document.getElementById('final-msg').textContent = msg;
+
+  // Progress fill to 100%
+  document.getElementById('progress-fill').style.width = '100%';
+
+  document.getElementById('final').classList.add('show');
+}
+
+// Init
+startQuiz();
+</script>
+</body>
+</html>
